@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { db } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 const { createContext, useContext, useReducer } = React
 
 const AppContext = createContext()
@@ -64,6 +66,20 @@ function generateId() {
 
 function appReducer(state, action) {
   switch (action.type) {
+    case 'LOAD_CLIENTS':
+      return {
+        ...state,
+        clients: action.payload.map(client => ({
+          id: client.id,
+          clientInfo: client.client_info || {},
+          costInputs: client.cost_inputs || {},
+          consultingInputs: client.consulting_inputs || {},
+          calculations: client.calculations || {},
+          status: client.status || 'draft',
+          createdAt: client.created_at,
+          updatedAt: client.updated_at
+        }))
+      }
     case 'ADD_CLIENT':
       const newClient = {
         id: generateId(),
@@ -100,6 +116,7 @@ function appReducer(state, action) {
           currentClientId: action.payload,
           clientInfo: currentClient.clientInfo || initialState.clientInfo,
           costInputs: currentClient.costInputs || initialState.costInputs,
+          consultingInputs: currentClient.consultingInputs || initialState.consultingInputs,
           calculations: currentClient.calculations || initialState.calculations
         }
       }
@@ -111,6 +128,7 @@ function appReducer(state, action) {
           id: generateId(),
           clientInfo: state.clientInfo,
           costInputs: state.costInputs,
+          consultingInputs: state.consultingInputs,
           calculations: state.calculations,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -131,6 +149,7 @@ function appReducer(state, action) {
                   ...client,
                   clientInfo: state.clientInfo,
                   costInputs: state.costInputs,
+                  consultingInputs: state.consultingInputs,
                   calculations: state.calculations,
                   updatedAt: new Date().toISOString(),
                   status: state.calculations.totalCost > 0 ? 'completed' : 'draft'
@@ -145,6 +164,7 @@ function appReducer(state, action) {
         currentClientId: null,
         clientInfo: initialState.clientInfo,
         costInputs: initialState.costInputs,
+        consultingInputs: initialState.consultingInputs,
         calculations: initialState.calculations
       }
     case 'UPDATE_CLIENT_INFO':
@@ -169,12 +189,7 @@ function appReducer(state, action) {
       }
     case 'RESET_DATA':
       return {
-        ...state,
-        currentClientId: null,
-        clientInfo: initialState.clientInfo,
-        costInputs: initialState.costInputs,
-        consultingInputs: initialState.consultingInputs,
-        calculations: initialState.calculations
+        ...initialState
       }
     default:
       return state
@@ -183,9 +198,83 @@ function appReducer(state, action) {
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
+  const { user } = useAuth()
+
+  // Load clients from database when user signs in
+  React.useEffect(() => {
+    if (user) {
+      loadClientsFromDatabase()
+    } else {
+      // Clear clients when user signs out
+      dispatch({ type: 'RESET_DATA' })
+    }
+  }, [user])
+
+  const loadClientsFromDatabase = async () => {
+    try {
+      const { data: clients, error } = await db.getClients()
+      if (error) {
+        console.error('Error loading clients:', error)
+        return
+      }
+      
+      if (clients) {
+        dispatch({ type: 'LOAD_CLIENTS', payload: clients })
+      }
+    } catch (error) {
+      console.error('Error loading clients:', error)
+    }
+  }
+
+  const saveClientToDatabase = async (clientData) => {
+    try {
+      if (clientData.id) {
+        // Update existing client
+        const { data, error } = await db.updateClient(clientData.id, {
+          client_info: clientData.clientInfo,
+          cost_inputs: clientData.costInputs,
+          consulting_inputs: clientData.consultingInputs,
+          calculations: clientData.calculations,
+          status: clientData.status
+        })
+        if (error) throw error
+        return data
+      } else {
+        // Create new client
+        const { data, error } = await db.createClient({
+          client_info: clientData.clientInfo,
+          cost_inputs: clientData.costInputs,
+          consulting_inputs: clientData.consultingInputs,
+          calculations: clientData.calculations,
+          status: clientData.status
+        })
+        if (error) throw error
+        return data
+      }
+    } catch (error) {
+      console.error('Error saving client:', error)
+      throw error
+    }
+  }
+
+  const deleteClientFromDatabase = async (clientId) => {
+    try {
+      const { error } = await db.deleteClient(clientId)
+      if (error) throw error
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      throw error
+    }
+  }
 
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ 
+      state, 
+      dispatch, 
+      saveClientToDatabase, 
+      deleteClientFromDatabase,
+      loadClientsFromDatabase 
+    }}>
       {children}
     </AppContext.Provider>
   )

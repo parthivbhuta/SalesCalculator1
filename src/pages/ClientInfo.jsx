@@ -5,25 +5,68 @@ import { useApp } from '../context/AppContext'
 import { Save, ArrowRight, User, Building, Mail, Phone, Briefcase, MessageSquare } from 'lucide-react'
 
 export default function ClientInfo() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, saveClientToDatabase } = useApp()
   const navigate = useNavigate()
   const [formData, setFormData] = useState(state.clientInfo)
+  const [saving, setSaving] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_CLIENT_INFO', payload: formData })
-    dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-    navigate('/cost-inputs')
+    
+    try {
+      // Save to local state first
+      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      // Then save to database
+      const currentClient = state.clients.find(c => c.id === state.currentClientId) || {
+        clientInfo: formData,
+        costInputs: state.costInputs,
+        consultingInputs: state.consultingInputs,
+        calculations: state.calculations,
+        status: 'draft'
+      }
+      
+      await saveClientToDatabase(currentClient)
+      navigate('/cost-inputs')
+    } catch (error) {
+      console.error('Error saving client:', error)
+      alert('Failed to save client data. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_CLIENT_INFO', payload: formData })
-    dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+    
+    try {
+      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      const currentClient = state.clients.find(c => c.id === state.currentClientId) || {
+        clientInfo: formData,
+        costInputs: state.costInputs,
+        consultingInputs: state.consultingInputs,
+        calculations: state.calculations,
+        status: 'draft'
+      }
+      
+      await saveClientToDatabase(currentClient)
+    } catch (error) {
+      console.error('Error saving client:', error)
+      alert('Failed to save client data. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const formFields = [
@@ -107,17 +150,19 @@ export default function ClientInfo() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={saving}
             className="btn-secondary flex items-center"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Draft
+            {saving ? 'Saving...' : 'Save Draft'}
           </button>
           
           <button
             type="submit"
+            disabled={saving}
             className="btn-primary flex items-center"
           >
-            Continue to Cost Inputs
+            {saving ? 'Saving...' : 'Continue to Cost Inputs'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </button>
         </div>

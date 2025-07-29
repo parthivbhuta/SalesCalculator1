@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import Layout from './components/Layout'
 import ClientsList from './pages/ClientsList'
@@ -11,18 +12,20 @@ import Dashboard from './pages/Dashboard'
 
 function App() {
   return (
-    <AppProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/clients" element={<ClientsList />} />
-          <Route path="/client-info" element={<ClientInfo />} />
-          <Route path="/cost-inputs" element={<CostInputs />} />
-          <Route path="/consulting-inputs" element={<ConsultingInputs />} />
-          <Route path="/results" element={<Results />} />
-        </Routes>
-      </Layout>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/clients" element={<ClientsList />} />
+            <Route path="/client-info" element={<ClientInfo />} />
+            <Route path="/cost-inputs" element={<CostInputs />} />
+            <Route path="/consulting-inputs" element={<ConsultingInputs />} />
+            <Route path="/results" element={<Results />} />
+          </Routes>
+        </Layout>
+      </AppProvider>
+    </AuthProvider>
   )
 }
 

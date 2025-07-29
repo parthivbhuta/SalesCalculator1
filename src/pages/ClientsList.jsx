@@ -33,7 +33,7 @@ const STATUS_CONFIG = {
 }
 
 export default function ClientsList() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, deleteClientFromDatabase } = useApp()
   const navigate = useNavigate()
   const { clients } = state
 
@@ -150,7 +150,14 @@ export default function ClientsList() {
 
   const handleDeleteClient = (clientId) => {
     if (window.confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
-      dispatch({ type: 'DELETE_CLIENT', payload: clientId })
+      deleteClientFromDatabase(clientId)
+        .then(() => {
+          dispatch({ type: 'DELETE_CLIENT', payload: clientId })
+        })
+        .catch((error) => {
+          console.error('Error deleting client:', error)
+          alert('Failed to delete client. Please try again.')
+        })
     }
   }
 

@@ -6,10 +6,11 @@ import { calculateCosts } from '../utils/calculations'
 import { Calculator, Clock, Users, Target, AlertTriangle, ArrowRight, Save, TrendingUp, DollarSign, TrendingDown, Building } from 'lucide-react'
 
 export default function CostInputs() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, saveClientToDatabase } = useApp()
   const navigate = useNavigate()
   const [formData, setFormData] = useState(state.costInputs)
   const [calculations, setCalculations] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -22,20 +23,61 @@ export default function CostInputs() {
     setCalculations(results)
   }, [formData])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_COST_INPUTS', payload: formData })
     dispatch({ type: 'UPDATE_CALCULATIONS', payload: calculations })
-    dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-    navigate('/consulting-inputs')
+    
+    try {
+      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      const currentClient = {
+        id: state.currentClientId,
+        clientInfo: state.clientInfo,
+        costInputs: formData,
+        consultingInputs: state.consultingInputs,
+        calculations: calculations,
+        status: calculations?.totalCost > 0 ? 'completed' : 'draft'
+      }
+      
+      await saveClientToDatabase(currentClient)
+      navigate('/consulting-inputs')
+    } catch (error) {
+      console.error('Error saving client:', error)
+      alert('Failed to save cost inputs. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_COST_INPUTS', payload: formData })
     if (calculations) {
       dispatch({ type: 'UPDATE_CALCULATIONS', payload: calculations })
-      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      try {
+        dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+        
+        const currentClient = {
+          id: state.currentClientId,
+          clientInfo: state.clientInfo,
+          costInputs: formData,
+          consultingInputs: state.consultingInputs,
+          calculations: calculations,
+          status: calculations?.totalCost > 0 ? 'completed' : 'draft'
+        }
+        
+        await saveClientToDatabase(currentClient)
+      } catch (error) {
+        console.error('Error saving client:', error)
+        alert('Failed to save cost inputs. Please try again.')
+      }
     }
+    setSaving(false)
   }
 
   const inputSections = [
@@ -267,18 +309,20 @@ export default function CostInputs() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={saving}
             className="btn-secondary flex items-center"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Parameters
+            {saving ? 'Saving...' : 'Save Parameters'}
           </button>
           
           <button
             type="submit"
+            disabled={saving}
             className="btn-primary flex items-center text-lg px-8 py-3"
           >
             <Calculator className="w-5 h-5 mr-2" />
-            Generate Detailed Results
+            {saving ? 'Saving...' : 'Generate Detailed Results'}
             <ArrowRight className="w-5 h-5 ml-2" />
           </button>
         </div>

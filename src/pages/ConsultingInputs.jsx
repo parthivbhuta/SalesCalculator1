@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext'
 import { DollarSign, Calculator, ArrowRight, Save, TrendingUp, Target, Users, Clock } from 'lucide-react'
 
 export default function ConsultingInputs() {
-  const { state, dispatch } = useApp()
+  const { state, dispatch, saveClientToDatabase } = useApp()
   const navigate = useNavigate()
   const [consultingData, setConsultingData] = useState({
     consultingFee: state.consultingInputs?.consultingFee || 75000,
@@ -14,6 +14,7 @@ export default function ConsultingInputs() {
     expectedWasteReduction: state.consultingInputs?.expectedWasteReduction || 60,
     ongoingSupportMonths: state.consultingInputs?.ongoingSupportMonths || 12
   })
+  const [saving, setSaving] = useState(false)
 
   const { calculations, costInputs } = state
 
@@ -23,16 +24,58 @@ export default function ConsultingInputs() {
     setConsultingData(prev => ({ ...prev, [name]: numericValue }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_CONSULTING_INPUTS', payload: consultingData })
-    dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-    navigate('/results')
+    
+    try {
+      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      const currentClient = {
+        id: state.currentClientId,
+        clientInfo: state.clientInfo,
+        costInputs: state.costInputs,
+        consultingInputs: consultingData,
+        calculations: state.calculations,
+        status: 'completed'
+      }
+      
+      await saveClientToDatabase(currentClient)
+      navigate('/results')
+    } catch (error) {
+      console.error('Error saving client:', error)
+      alert('Failed to save consulting inputs. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true)
+    
     dispatch({ type: 'UPDATE_CONSULTING_INPUTS', payload: consultingData })
-    dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+    
+    try {
+      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
+      
+      const currentClient = {
+        id: state.currentClientId,
+        clientInfo: state.clientInfo,
+        costInputs: state.costInputs,
+        consultingInputs: consultingData,
+        calculations: state.calculations,
+        status: state.calculations?.totalCost > 0 ? 'completed' : 'draft'
+      }
+      
+      await saveClientToDatabase(currentClient)
+    } catch (error) {
+      console.error('Error saving client:', error)
+      alert('Failed to save consulting inputs. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Calculate preview ROI metrics
@@ -298,18 +341,20 @@ export default function ConsultingInputs() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={saving}
             className="btn-secondary flex items-center"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Parameters
+            {saving ? 'Saving...' : 'Save Parameters'}
           </button>
           
           <button
             type="submit"
+            disabled={saving}
             className="btn-primary flex items-center text-lg px-8 py-3"
           >
             <Calculator className="w-5 h-5 mr-2" />
-            Generate ROI Analysis
+            {saving ? 'Saving...' : 'Generate ROI Analysis'}
             <ArrowRight className="w-5 h-5 ml-2" />
           </button>
         </div>
