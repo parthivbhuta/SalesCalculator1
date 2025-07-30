@@ -37,7 +37,7 @@ export default function Layout({ children }) {
                     alt="EPMA Logo" 
                     className="h-12 w-auto mr-4"
                   />
-                  <h1 className="text-lg font-semibold text-gray-900">Sales Cost Calculator</h1>
+                  <h1 className="text-sm font-medium text-gray-900">Sales Cost Calculator</h1>
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@ export default function Layout({ children }) {
                   <div className="flex items-center space-x-3 border-l border-gray-200 pl-4">
                     <div className="flex items-center text-sm text-gray-600">
                       <User className="w-4 h-4 mr-1" />
-                      {user.email}
+                      {user.email.split('@')[0].split('.').map(part => part.charAt(0).toUpperCase()).join('')}
                     </div>
                     <button
                       onClick={handleSignOut}
