@@ -31,7 +31,14 @@ export default function Layout({ children }) {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-gray-900">Sales Cost Calculator</h1>
+                <div className="flex items-center">
+                  <img 
+                    src="/NewEPMA logo.png" 
+                    alt="EPMA Logo" 
+                    className="h-8 w-auto mr-3"
+                  />
+                  <h1 className="text-xl font-bold text-gray-900">Sales Cost Calculator</h1>
+                </div>
               </div>
             </div>
             
