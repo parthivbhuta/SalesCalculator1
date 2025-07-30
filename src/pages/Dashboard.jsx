@@ -1,61 +1,71 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { Users, Calculator, BarChart3, TrendingUp, Clock, DollarSign, Target, CheckCircle2, AlertCircle, Building } from 'lucide-react'
+import { Users, Calculator, BarChart3, TrendingUp, Clock, DollarSign, Target, CheckCircle2, AlertCircle, Building, Calendar, Eye, Edit3 } from 'lucide-react'
 
 export default function Dashboard() {
   const { state } = useApp()
-  const { clientInfo, calculations, costInputs, clients } = state
+  const { clients } = state
 
-  const hasClientInfo = (clientInfo.name && clientInfo.company) || clients.length > 0
-  const hasCalculations = calculations.totalCost > 0
+  // Calculate aggregate statistics
+  const totalInvestment = clients.reduce((sum, client) => sum + (client.calculations?.totalCost || 0), 0)
+  const totalWaste = clients.reduce((sum, client) => sum + (client.calculations?.totalWaste || 0), 0)
+  const totalPotentialSavings = clients.reduce((sum, client) => sum + (client.calculations?.metrics?.potentialSavings || 0), 0)
+  const completedClients = clients.filter(c => c.status === 'completed').length
+  const averageEfficiency = clients.length > 0 
+    ? Math.round(clients.reduce((sum, client) => sum + (client.calculations?.metrics?.efficiencyRating || 0), 0) / clients.length)
+    : 0
+
+  // Get last 5 entries sorted by updated date
+  const recentEntries = clients
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, 5)
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount)
+  }
 
   const quickStats = [
     {
-      name: 'Project Investment',
-      value: hasCalculations ? `$${calculations.totalCost.toLocaleString()}` : '$0',
+      name: 'Total Project Investment',
+      value: formatCurrency(totalInvestment),
       icon: DollarSign,
       color: 'text-green-600 bg-green-100',
-      description: 'Total estimated cost'
+      description: 'Sum of all client projects'
     },
     {
-      name: 'Total Clients',
-      value: clients.length.toString(),
-      icon: Target,
-      color: 'text-blue-600 bg-blue-100',
-      description: 'Clients in system'
+      name: 'Total Waste Identified',
+      value: formatCurrency(totalWaste),
+      icon: TrendingDown,
+      color: 'text-red-600 bg-red-100',
+      description: 'Inefficiencies across all projects'
     },
     {
-      name: 'Monthly Burn Rate',
-      value: hasCalculations ? `$${calculations.metrics.monthlyBurnRate.toLocaleString()}` : '$0',
+      name: 'Potential Savings',
+      value: formatCurrency(totalPotentialSavings),
       icon: TrendingUp,
+      color: 'text-blue-600 bg-blue-100',
+      description: 'Total savings opportunity'
+    },
+    {
+      name: 'Average Efficiency',
+      value: `${averageEfficiency}%`,
+      icon: Target,
       color: 'text-purple-600 bg-purple-100',
-      description: 'Average monthly cost'
-    },
-    {
-      name: 'Efficiency Score',
-      value: hasCalculations ? `${Math.round((100 - costInputs.inefficiencyPercentage))}%` : '0%',
-      icon: Clock,
-      color: 'text-orange-600 bg-orange-100',
-      description: 'Process efficiency'
-    }
-  ]
-
-  const completionStatus = [
-    {
-      step: 'Client Information',
-      completed: hasClientInfo,
-      description: 'Client details and project requirements captured'
-    },
-    {
-      step: 'Cost Parameters',
-      completed: true, // Always true as we have defaults
-      description: 'Project parameters configured'
-    },
-    {
-      step: 'Cost Analysis',
-      completed: hasCalculations,
-      description: 'Comprehensive cost breakdown generated'
+      description: 'Across all projects'
     }
   ]
 
@@ -70,7 +80,7 @@ export default function Dashboard() {
           Transform your sales process with data-driven project cost analysis. Generate professional, 
           accurate estimates that win deals and build client confidence.
         </p>
-        {!hasClientInfo && (
+        {clients.length === 0 && (
           <Link to="/client-info" className="btn-primary text-lg px-8 py-3">
             Start New Project Analysis
           </Link>
@@ -98,189 +108,116 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Progress Tracker */}
-      <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Project Analysis Progress</h3>
-        <div className="space-y-4">
-          {completionStatus.map((status, index) => (
-            <div key={status.step} className="flex items-center">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                status.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-              }`}>
-                {status.completed ? <CheckCircle2 className="w-5 h-5" /> : <div className="w-2 h-2 bg-gray-400 rounded-full" />}
-              </div>
-              <div className="ml-4 flex-1">
-                <h4 className={`font-medium ${status.completed ? 'text-gray-900' : 'text-gray-500'}`}>
-                  {status.step}
-                </h4>
-                <p className="text-sm text-gray-600">{status.description}</p>
-              </div>
-              {status.completed && (
-                <span className="text-sm text-green-600 font-medium">Complete</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link to="/clients" className="card hover:shadow-md transition-all duration-200 hover:border-primary-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">All Clients</h3>
-              <p className="text-gray-600 text-sm">
-                View and manage all client cost calculations
-              </p>
-            </div>
-            <Building className="w-8 h-8 text-primary-600" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {clients.length} {clients.length === 1 ? 'Client' : 'Clients'}
-            </span>
-            <span className="text-sm text-gray-500">View all</span>
-          </div>
-        </Link>
-
-        <Link to="/client-info" className="card hover:shadow-md transition-all duration-200 hover:border-primary-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Client Information</h3>
-              <p className="text-gray-600 text-sm">
-                {hasClientInfo ? 'Update client details and requirements' : 'Capture client details and project scope'}
-              </p>
-            </div>
-            <Users className="w-8 h-8 text-primary-600" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-              hasClientInfo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-            }`}>
-              {hasClientInfo ? 'Completed' : 'Pending'}
-            </span>
-            {hasClientInfo && <span className="text-sm text-gray-500">Ready to update</span>}
-          </div>
-        </Link>
-
-        <Link to="/cost-inputs" className="card hover:shadow-md transition-all duration-200 hover:border-primary-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cost Parameters</h3>
-              <p className="text-gray-600 text-sm">
-                Configure project parameters and calculate comprehensive costs
-              </p>
-            </div>
-            <Calculator className="w-8 h-8 text-primary-600" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              Ready
-            </span>
-            <span className="text-sm text-gray-500">Live calculations</span>
-          </div>
-        </Link>
-
-        <Link to="/consulting-inputs" className="card hover:shadow-md transition-all duration-200 hover:border-primary-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Consulting Setup</h3>
-              <p className="text-gray-600 text-sm">
-                Configure consulting parameters and ROI projections
-              </p>
-            </div>
-            <BarChart3 className="w-8 h-8 text-primary-600" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-              Configure
-            </span>
-            <span className="text-sm text-gray-500">ROI analysis</span>
-          </div>
-        </Link>
-
-        <Link to="/results" className="card hover:shadow-md transition-all duration-200 hover:border-primary-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Analysis Results</h3>
-              <p className="text-gray-600 text-sm">
-                {hasCalculations ? 'View comprehensive cost analysis and reports' : 'Generate detailed cost breakdown and insights'}
-              </p>
-            </div>
-            <BarChart3 className="w-8 h-8 text-primary-600" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-              hasCalculations ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-            }`}>
-              {hasCalculations ? 'Available' : 'Pending'}
-            </span>
-            {hasCalculations && <span className="text-sm text-gray-500">Export ready</span>}
-          </div>
-        </Link>
-      </div>
-
-      {/* Current Project Overview */}
-      {hasClientInfo && (
+      {/* Recent Entries Table */}
+      {clients.length > 0 ? (
         <div className="card">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Current Project Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Recent Client Entries</h3>
             <Link to="/clients" className="text-primary-600 hover:text-primary-800 text-sm font-medium">
               View All Clients →
             </Link>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <div className="border-l-4 border-primary-500 pl-4 mb-4">
-                <h4 className="font-semibold text-gray-900 text-lg">{clientInfo.company}</h4>
-                <p className="text-gray-600">
-                  <span className="font-medium">{clientInfo.name}</span>
-                  {clientInfo.title && ` • ${clientInfo.title}`}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">{clientInfo.email}</p>
-                {clientInfo.phone && <p className="text-sm text-gray-500">{clientInfo.phone}</p>}
-              </div>
-              
-              {clientInfo.problemStatement && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-medium text-gray-900 mb-2">Project Requirements</h5>
-                  <p className="text-sm text-gray-700 italic">"{clientInfo.problemStatement}"</p>
-                </div>
-              )}
-            </div>
-            
-            {hasCalculations && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-                  <h5 className="font-medium text-green-900 mb-2">Project Investment</h5>
-                  <p className="text-2xl font-bold text-green-900">${calculations.totalCost.toLocaleString()}</p>
-                  <p className="text-sm text-green-700">
-                    {costInputs.projectDuration} months • {costInputs.teamSize} team members
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600 font-medium">Monthly Rate</p>
-                    <p className="text-lg font-semibold text-blue-900">
-                      ${calculations.metrics.monthlyBurnRate.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-purple-600 font-medium">Effective Rate</p>
-                    <p className="text-lg font-semibold text-purple-900">
-                      ${calculations.metrics.effectiveHourlyRate}/hr
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Company
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Cost
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Last Updated
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {recentEntries.map((client) => (
+                  <tr key={client.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {client.clientInfo?.name || 'No name'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {client.clientInfo?.company || 'No company'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                      {client.calculations?.totalCost ? formatCurrency(client.calculations.totalCost) : 'Not calculated'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        client.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        client.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        client.status === 'archived' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {client.status === 'completed' ? 'Completed' :
+                         client.status === 'pending' ? 'Pending' :
+                         client.status === 'archived' ? 'Archived' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {formatDate(client.updatedAt)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Link
+                          to="/client-info"
+                          onClick={() => {
+                            // Set current client when editing
+                            // This will be handled by the context
+                          }}
+                          className="text-primary-600 hover:text-primary-900"
+                          title="Edit client"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Link>
+                        {client.calculations?.totalCost > 0 && (
+                          <Link
+                            to="/results"
+                            onClick={() => {
+                              // Set current client when viewing results
+                              // This will be handled by the context
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                            title="View results"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No clients yet</h3>
+          <p className="text-gray-600 mb-6">Start by creating your first client cost analysis</p>
+          <Link to="/client-info" className="btn-primary">
+            Create First Client
+          </Link>
         </div>
       )}
 
       {/* Getting Started Guide */}
-      {!hasClientInfo && (
+      {clients.length === 0 && (
         <div className="card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <div className="flex items-start">
             <div className="flex-shrink-0">
