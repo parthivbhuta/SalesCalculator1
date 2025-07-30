@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { Users, Calculator, BarChart3, TrendingUp, Clock, DollarSign, Target, CheckCircle2, AlertCircle, Building, Calendar, Eye, Edit3 } from 'lucide-react'
+import { Users, Calculator, BarChart3, TrendingUp, TrendingDown, Clock, DollarSign, Target, CheckCircle2, AlertCircle, Building, Calendar, Eye, Edit3 } from 'lucide-react'
 
 export default function Dashboard() {
   const { state } = useApp()
