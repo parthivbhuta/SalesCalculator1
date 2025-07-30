@@ -128,7 +128,16 @@ export default function Dashboard() {
                     Company
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Cost
+                    Project Cost
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Waste Identified
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Savings Opportunity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Efficiency
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -152,6 +161,24 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
                       {client.calculations?.totalCost ? formatCurrency(client.calculations.totalCost) : 'Not calculated'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold">
+                      {client.calculations?.totalWaste ? formatCurrency(client.calculations.totalWaste) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
+                      {client.calculations?.metrics?.potentialSavings ? formatCurrency(client.calculations.metrics.potentialSavings) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <div className={`w-2 h-2 rounded-full mr-2 ${
+                          client.calculations?.metrics?.efficiencyRating >= 80 ? 'bg-green-500' :
+                          client.calculations?.metrics?.efficiencyRating >= 60 ? 'bg-yellow-500' :
+                          client.calculations?.metrics?.efficiencyRating ? 'bg-red-500' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="font-medium">
+                          {client.calculations?.metrics?.efficiencyRating ? `${client.calculations.metrics.efficiencyRating}%` : '-'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
