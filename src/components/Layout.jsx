@@ -35,9 +35,9 @@ export default function Layout({ children }) {
                   <img 
                     src="/NewEPMA logo.png" 
                     alt="EPMA Logo" 
-                    className="h-8 w-auto mr-3"
+                    className="h-12 w-auto mr-4"
                   />
-                  <h1 className="text-xl font-bold text-gray-900">Sales Cost Calculator</h1>
+                  <h1 className="text-lg font-semibold text-gray-900">Sales Cost Calculator</h1>
                 </div>
               </div>
             </div>
