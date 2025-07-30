@@ -22,19 +22,8 @@ export default function ClientInfo() {
     dispatch({ type: 'UPDATE_CLIENT_INFO', payload: formData })
     
     try {
-      // Save to local state first
-      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-      
-      // Then save to database
-      const currentClient = state.clients.find(c => c.id === state.currentClientId) || {
-        clientInfo: formData,
-        costInputs: state.costInputs,
-        consultingInputs: state.consultingInputs,
-        calculations: state.calculations,
-        status: 'draft'
-      }
-      
-      await saveClientToDatabase(currentClient)
+      // Save to database (this will also update local state)
+      await saveClientToDatabase()
       navigate('/cost-inputs')
     } catch (error) {
       console.error('Error saving client:', error)
@@ -50,17 +39,8 @@ export default function ClientInfo() {
     dispatch({ type: 'UPDATE_CLIENT_INFO', payload: formData })
     
     try {
-      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-      
-      const currentClient = state.clients.find(c => c.id === state.currentClientId) || {
-        clientInfo: formData,
-        costInputs: state.costInputs,
-        consultingInputs: state.consultingInputs,
-        calculations: state.calculations,
-        status: 'draft'
-      }
-      
-      await saveClientToDatabase(currentClient)
+      // Save to database (this will also update local state)
+      await saveClientToDatabase()
     } catch (error) {
       console.error('Error saving client:', error)
       alert('Failed to save client data. Please try again.')

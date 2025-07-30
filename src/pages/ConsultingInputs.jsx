@@ -31,18 +31,8 @@ export default function ConsultingInputs() {
     dispatch({ type: 'UPDATE_CONSULTING_INPUTS', payload: consultingData })
     
     try {
-      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-      
-      const currentClient = {
-        id: state.currentClientId,
-        clientInfo: state.clientInfo,
-        costInputs: state.costInputs,
-        consultingInputs: consultingData,
-        calculations: state.calculations,
-        status: 'completed'
-      }
-      
-      await saveClientToDatabase(currentClient)
+      // Save to database (this will also update local state)
+      await saveClientToDatabase()
       navigate('/results')
     } catch (error) {
       console.error('Error saving client:', error)
@@ -58,18 +48,8 @@ export default function ConsultingInputs() {
     dispatch({ type: 'UPDATE_CONSULTING_INPUTS', payload: consultingData })
     
     try {
-      dispatch({ type: 'SAVE_CURRENT_CLIENT' })
-      
-      const currentClient = {
-        id: state.currentClientId,
-        clientInfo: state.clientInfo,
-        costInputs: state.costInputs,
-        consultingInputs: consultingData,
-        calculations: state.calculations,
-        status: state.calculations?.totalCost > 0 ? 'completed' : 'draft'
-      }
-      
-      await saveClientToDatabase(currentClient)
+      // Save to database (this will also update local state)
+      await saveClientToDatabase()
     } catch (error) {
       console.error('Error saving client:', error)
       alert('Failed to save consulting inputs. Please try again.')

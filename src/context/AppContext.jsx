@@ -59,11 +59,6 @@ const initialState = {
   }
 }
 
-// Helper function to generate unique ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
-
 function appReducer(state, action) {
   switch (action.type) {
     case 'LOAD_CLIENTS':
@@ -80,18 +75,26 @@ function appReducer(state, action) {
           updatedAt: client.updated_at
         }))
       }
-    case 'ADD_CLIENT':
-      const newClient = {
-        id: generateId(),
-        ...action.payload,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        status: 'draft'
-      }
-      return {
-        ...state,
-        clients: [...state.clients, newClient],
-        currentClientId: newClient.id
+    case 'UPDATE_CLIENT_IN_STATE':
+      const clientData = action.payload
+      const existingClientIndex = state.clients.findIndex(client => client.id === clientData.id)
+      
+      if (existingClientIndex >= 0) {
+        // Update existing client
+        return {
+          ...state,
+          clients: state.clients.map(client =>
+            client.id === clientData.id ? clientData : client
+          ),
+          currentClientId: clientData.id
+        }
+      } else {
+        // Add new client
+        return {
+          ...state,
+          clients: [...state.clients, clientData],
+          currentClientId: clientData.id
+        }
       }
     case 'UPDATE_CLIENT':
       return {
@@ -121,43 +124,6 @@ function appReducer(state, action) {
         }
       }
       return state
-    case 'SAVE_CURRENT_CLIENT':
-      if (!state.currentClientId) {
-        // Create new client
-        const newClient = {
-          id: generateId(),
-          clientInfo: state.clientInfo,
-          costInputs: state.costInputs,
-          consultingInputs: state.consultingInputs,
-          calculations: state.calculations,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          status: state.calculations.totalCost > 0 ? 'completed' : 'draft'
-        }
-        return {
-          ...state,
-          clients: [...state.clients, newClient],
-          currentClientId: newClient.id
-        }
-      } else {
-        // Update existing client
-        return {
-          ...state,
-          clients: state.clients.map(client =>
-            client.id === state.currentClientId
-              ? {
-                  ...client,
-                  clientInfo: state.clientInfo,
-                  costInputs: state.costInputs,
-                  consultingInputs: state.consultingInputs,
-                  calculations: state.calculations,
-                  updatedAt: new Date().toISOString(),
-                  status: state.calculations.totalCost > 0 ? 'completed' : 'draft'
-                }
-              : client
-          )
-        }
-      }
     case 'START_NEW_CLIENT':
       return {
         ...state,
@@ -228,27 +194,57 @@ export function AppProvider({ children }) {
 
   const saveClientToDatabase = async (clientData) => {
     try {
-      if (clientData.id) {
+      if (state.currentClientId) {
         // Update existing client
-        const { data, error } = await db.updateClient(clientData.id, {
-          client_info: clientData.clientInfo,
-          cost_inputs: clientData.costInputs,
-          consulting_inputs: clientData.consultingInputs,
-          calculations: clientData.calculations,
-          status: clientData.status
+        const { data, error } = await db.updateClient(state.currentClientId, {
+          client_info: state.clientInfo,
+          cost_inputs: state.costInputs,
+          consulting_inputs: state.consultingInputs,
+          calculations: state.calculations,
+          status: state.calculations?.totalCost > 0 ? 'completed' : 'draft'
         })
         if (error) throw error
+        
+        // Update local state with the updated client data
+        if (data) {
+          const updatedClient = {
+            id: data.id,
+            clientInfo: data.client_info || {},
+            costInputs: data.cost_inputs || {},
+            consultingInputs: data.consulting_inputs || {},
+            calculations: data.calculations || {},
+            status: data.status || 'draft',
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          }
+          dispatch({ type: 'UPDATE_CLIENT_IN_STATE', payload: updatedClient })
+        }
         return data
       } else {
         // Create new client
         const { data, error } = await db.createClient({
-          client_info: clientData.clientInfo,
-          cost_inputs: clientData.costInputs,
-          consulting_inputs: clientData.consultingInputs,
-          calculations: clientData.calculations,
-          status: clientData.status
+          client_info: state.clientInfo,
+          cost_inputs: state.costInputs,
+          consulting_inputs: state.consultingInputs,
+          calculations: state.calculations,
+          status: state.calculations?.totalCost > 0 ? 'completed' : 'draft'
         })
         if (error) throw error
+        
+        // Add new client to local state with the Supabase-generated UUID
+        if (data) {
+          const newClient = {
+            id: data.id,
+            clientInfo: data.client_info || {},
+            costInputs: data.cost_inputs || {},
+            consultingInputs: data.consulting_inputs || {},
+            calculations: data.calculations || {},
+            status: data.status || 'draft',
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+          }
+          dispatch({ type: 'UPDATE_CLIENT_IN_STATE', payload: newClient })
+        }
         return data
       }
     } catch (error) {
