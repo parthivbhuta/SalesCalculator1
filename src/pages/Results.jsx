@@ -146,9 +146,9 @@ export default function Results() {
             <Printer className="w-4 h-4 mr-2" />
             Print
           </button>
-          <button className="btn-primary flex items-center">
+          <button className="btn-primary flex items-center" disabled title="PDF export coming soon">
             <Download className="w-4 h-4 mr-2" />
-            Export PDF
+            Export PDF (Coming Soon)
           </button>
         </div>
       </div>
@@ -374,25 +374,43 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Timeline and Cash Flow */}
+      {/* Waste vs Efficiency Comparison */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Project Cash Flow Timeline</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Efficiency vs Industry Benchmarks</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart 
+            data={[
+              { category: 'Your Project', efficiency: metrics.efficiencyRating, waste: metrics.wastePercentage, fill: '#EF4444' },
+              { category: 'Industry Average', efficiency: 75, waste: 25, fill: '#F59E0B' },
+              { category: 'Best Practice', efficiency: 90, waste: 10, fill: '#10B981' }
+            ]} 
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Cumulative Cost']} />
-            <Area 
-              type="monotone" 
-              dataKey="cumulative" 
-              stroke="#3B82F6" 
-              fill="#3B82F6" 
-              fillOpacity={0.3}
-              strokeWidth={3}
-            />
-          </AreaChart>
+            <XAxis dataKey="category" />
+            <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+            <Tooltip formatter={(value, name) => [`${value}%`, name === 'efficiency' ? 'Efficiency Rating' : 'Waste Percentage']} />
+            <Bar dataKey="efficiency" fill="#10B981" name="efficiency" />
+            <Bar dataKey="waste" fill="#EF4444" name="waste" />
+          </BarChart>
         </ResponsiveContainer>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-red-50 rounded-lg">
+            <p className="text-sm text-red-600 font-medium">Your Project</p>
+            <p className="text-lg font-bold text-red-900">{metrics.efficiencyRating}% Efficient</p>
+            <p className="text-xs text-red-600">{metrics.wastePercentage}% waste</p>
+          </div>
+          <div className="text-center p-3 bg-yellow-50 rounded-lg">
+            <p className="text-sm text-yellow-600 font-medium">Industry Average</p>
+            <p className="text-lg font-bold text-yellow-900">75% Efficient</p>
+            <p className="text-xs text-yellow-600">25% waste</p>
+          </div>
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <p className="text-sm text-green-600 font-medium">Best Practice</p>
+            <p className="text-lg font-bold text-green-900">90% Efficient</p>
+            <p className="text-xs text-green-600">10% waste</p>
+          </div>
+        </div>
       </div>
 
       {/* Risk Assessment */}
