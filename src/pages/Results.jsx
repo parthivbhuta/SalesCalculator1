@@ -382,13 +382,13 @@ export default function Results() {
             data={[
               { 
                 category: 'Process Efficiency', 
-                yourPerformance: Math.max(0, 100 - (costInputs.inefficiencyPercentage || 15)), 
+                yourPerformance: Math.max(0, 100 - (costInputs.inefficiencyPercentage || 15)),
                 industryAverage: 80, 
                 bestPractice: 95 
               },
               { 
                 category: 'Meeting Efficiency', 
-                yourPerformance: Math.max(0, 100 - Math.min(50, ((costInputs.meetingsPerWeek || 12) * (costInputs.meetingDuration || 1) * (costInputs.participantsPerMeeting || 4)) / 10)), 
+                yourPerformance: Math.max(30, 100 - Math.min(60, (costInputs.meetingsPerWeek || 12) * 2)),
                 industryAverage: 75, 
                 bestPractice: 90 
               },
@@ -406,13 +406,13 @@ export default function Results() {
               },
               { 
                 category: 'Quality Management', 
-                yourPerformance: Math.max(0, 100 - (costInputs.defectRate || 6)), 
+                yourPerformance: Math.max(70, 100 - ((costInputs.defectRate || 6) * 2)),
                 industryAverage: 92, 
                 bestPractice: 98 
               },
               { 
                 category: 'Timeline Management', 
-                yourPerformance: Math.max(0, 100 - (costInputs.delayPercentage || 25)), 
+                yourPerformance: Math.max(50, 100 - (costInputs.delayPercentage || 25)),
                 industryAverage: 85, 
                 bestPractice: 95 
               }
