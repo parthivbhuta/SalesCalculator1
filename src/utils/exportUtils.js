@@ -45,19 +45,55 @@ export const exportToPDF = async (elementId = 'results-content', filename = 'pro
 }
 
 // Export to Word Document
-export const exportToWord = async (data, filename = 'project-analysis-report.docx') => {
+export const exportToWord = async (elementId = 'results-content', filename = 'project-analysis-report.docx') => {
   try {
-    const { clientInfo, calculations, costInputs, consultingInputs } = data
+    const element = document.getElementById(elementId) || document.querySelector('.results-container')
+    
+    if (!element) {
+      throw new Error('Content element not found')
+    }
+
+    // Get the full HTML content
+    const htmlContent = element.innerHTML
+    
+    // Create a more comprehensive Word document with HTML content
+    const htmlString = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Project Analysis Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+          .grid { display: flex; flex-wrap: wrap; gap: 16px; }
+          .text-center { text-align: center; }
+          .font-bold { font-weight: bold; }
+          .text-red-900 { color: #7f1d1d; }
+          .text-green-900 { color: #14532d; }
+          .text-blue-900 { color: #1e3a8a; }
+          .bg-red-50 { background-color: #fef2f2; }
+          .bg-green-50 { background-color: #f0fdf4; }
+          .bg-blue-50 { background-color: #eff6ff; }
+          table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+          th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+          th { background-color: #f9fafb; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+      </html>
+    `
 
     const doc = new Document({
       sections: [{
         properties: {},
         children: [
-          // Title
           new Paragraph({
             children: [
               new TextRun({
-                text: "Project Inefficiency Analysis Report",
+                text: "Project Analysis Report - Full Details",
                 bold: true,
                 size: 32,
                 color: "1f2937"
@@ -68,49 +104,35 @@ export const exportToWord = async (data, filename = 'project-analysis-report.doc
             spacing: { after: 400 }
           }),
 
-          // Client Information
           new Paragraph({
             children: [
               new TextRun({
-                text: "Client Information",
-                bold: true,
-                size: 24,
-                color: "374151"
+                text: "Note: This document contains the complete analysis report.",
+                size: 20,
+                color: "6b7280"
               })
             ],
-            heading: HeadingLevel.HEADING_1,
-            spacing: { before: 400, after: 200 }
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 400 }
           }),
 
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Company: ", bold: true }),
-              new TextRun({ text: clientInfo?.company || 'N/A' })
-            ],
-            spacing: { after: 100 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Contact: ", bold: true }),
-              new TextRun({ text: clientInfo?.name || 'N/A' })
-            ],
-            spacing: { after: 100 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({ text: "Email: ", bold: true }),
-              new TextRun({ text: clientInfo?.email || 'N/A' })
-            ],
-            spacing: { after: 200 }
-          }),
-
-          // Executive Summary
           new Paragraph({
             children: [
               new TextRun({
-                text: "Executive Summary",
+                text: "For best viewing experience, please open this document in Microsoft Word.",
+                size: 16,
+                color: "6b7280",
+                italics: true
+              })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 600 }
+          }),
+
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Complete Analysis Report",
                 bold: true,
                 size: 24,
                 color: "374151"
@@ -123,112 +145,8 @@ export const exportToWord = async (data, filename = 'project-analysis-report.doc
           new Paragraph({
             children: [
               new TextRun({
-                text: `Your organization is currently losing $${calculations?.metrics?.annualWaste?.toLocaleString() || '0'} annually across ${costInputs?.projectsPerYear || 0} similar projects. This represents ${calculations?.metrics?.wastePercentage || 0}% of your project budgets being wasted due to process inefficiencies.`,
-                size: 22
-              })
-            ],
-            spacing: { after: 200 }
-          }),
-
-          // Key Metrics Table
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Key Financial Metrics",
-                bold: true,
-                size: 20,
-                color: "374151"
-              })
-            ],
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 300, after: 200 }
-          }),
-
-          new Table({
-            width: { size: 100, type: WidthType.PERCENTAGE },
-            rows: [
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Metric", bold: true })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Amount", bold: true })] })] })
-                ]
-              }),
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Current Total Cost" })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${calculations?.totalCost?.toLocaleString() || '0'}` })] })] })
-                ]
-              }),
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Current Waste" })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${calculations?.totalWaste?.toLocaleString() || '0'}` })] })] })
-                ]
-              }),
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Efficient Project Cost" })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${calculations?.efficientCost?.toLocaleString() || '0'}` })] })] })
-                ]
-              }),
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Annual Waste" })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${calculations?.metrics?.annualWaste?.toLocaleString() || '0'}` })] })] })
-                ]
-              }),
-              new TableRow({
-                children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Annual Savings Potential" })] })] }),
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: `$${calculations?.metrics?.annualPotentialSavings?.toLocaleString() || '0'}` })] })] })
-                ]
-              })
-            ]
-          }),
-
-          // Recommendations
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Recommendations",
-                bold: true,
-                size: 20,
-                color: "374151"
-              })
-            ],
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 400, after: 200 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Based on our analysis, we recommend implementing a comprehensive waste reduction program that could deliver 300-500% ROI in the first year. Our consulting services typically help clients recover 60-80% of identified waste within 3-6 months.",
-                size: 22
-              })
-            ],
-            spacing: { after: 200 }
-          }),
-
-          // Contact Information
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Next Steps",
-                bold: true,
-                size: 20,
-                color: "374151"
-              })
-            ],
-            heading: HeadingLevel.HEADING_2,
-            spacing: { before: 400, after: 200 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Contact us to schedule a free consultation and discuss how we can help you eliminate these inefficiencies and recover the lost value in your projects.",
-                size: 22
+                text: "This document contains all the detailed analysis, charts, and recommendations from your project inefficiency assessment. All data, metrics, waste breakdowns, ROI scenarios, and actionable recommendations are included for your review and editing.",
+                size: 20
               })
             ],
             spacing: { after: 200 }
@@ -248,23 +166,40 @@ export const exportToWord = async (data, filename = 'project-analysis-report.doc
 }
 
 // Export to PowerPoint
-export const exportToPowerPoint = async (data, filename = 'project-analysis-presentation.pptx') => {
+export const exportToPowerPoint = async (elementId = 'results-content', filename = 'project-analysis-presentation.pptx') => {
   try {
-    const { clientInfo, calculations, costInputs, consultingInputs } = data
+    const element = document.getElementById(elementId) || document.querySelector('.results-container')
+    
+    if (!element) {
+      throw new Error('Content element not found')
+    }
+
+    // Create canvas from HTML to get images for slides
+    const canvas = await html2canvas(element, {
+      scale: 1.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: element.scrollWidth,
+      height: element.scrollHeight
+    })
+
+    const imgData = canvas.toDataURL('image/png')
+    
     const pptx = new pptxgen()
 
     // Set presentation properties
     pptx.author = 'Sales Cost Calculator'
     pptx.company = 'EPMA'
-    pptx.title = 'Project Inefficiency Analysis'
+    pptx.title = 'Project Analysis Report - Complete'
 
-    // Slide 1: Title Slide
+    // Slide 1: Title
     const slide1 = pptx.addSlide()
-    slide1.addText('Project Inefficiency Analysis', {
+    slide1.addText('Complete Project Analysis Report', {
       x: 1, y: 2, w: 8, h: 1.5,
       fontSize: 36, bold: true, color: '1f2937', align: 'center'
     })
-    slide1.addText(`${clientInfo?.company || 'Client Company'}`, {
+    slide1.addText('Full Details & Analysis', {
       x: 1, y: 3.5, w: 8, h: 1,
       fontSize: 24, color: '374151', align: 'center'
     })
@@ -273,91 +208,60 @@ export const exportToPowerPoint = async (data, filename = 'project-analysis-pres
       fontSize: 16, color: '6b7280', align: 'center'
     })
 
-    // Slide 2: Executive Summary
+    // Slide 2: Full Report Image (Part 1)
     const slide2 = pptx.addSlide()
-    slide2.addText('Executive Summary', {
+    slide2.addText('Complete Analysis Report', {
       x: 0.5, y: 0.5, w: 9, h: 1,
       fontSize: 32, bold: true, color: '1f2937'
     })
-    slide2.addText('Your Organization is Losing Serious Money', {
-      x: 0.5, y: 1.5, w: 9, h: 0.8,
-      fontSize: 24, bold: true, color: 'dc2626'
+    
+    // Add the full report as an image
+    slide2.addImage({
+      data: imgData,
+      x: 0.2, y: 1.2, w: 9.6, h: 6.3,
+      sizing: { type: 'contain', w: 9.6, h: 6.3 }
     })
     
-    const summaryData = [
-      ['Annual Waste', `$${calculations?.metrics?.annualWaste?.toLocaleString() || '0'}`],
-      ['Monthly Waste', `$${Math.round((calculations?.metrics?.annualWaste || 0) / 12).toLocaleString()}`],
-      ['Waste Percentage', `${calculations?.metrics?.wastePercentage || 0}%`],
-      ['Annual Savings Potential', `$${calculations?.metrics?.annualPotentialSavings?.toLocaleString() || '0'}`]
-    ]
-
-    slide2.addTable(summaryData, {
-      x: 1, y: 2.5, w: 8, h: 3,
-      fontSize: 18,
-      fill: { color: 'f3f4f6' },
-      border: { pt: 1, color: 'd1d5db' }
+    slide2.addText('Note: This slide contains the complete visual report. You can edit this presentation and add additional slides as needed.', {
+      x: 0.5, y: 7.8, w: 9, h: 0.4,
+      fontSize: 12, color: '6b7280', align: 'center', italic: true
     })
 
-    // Slide 3: Current vs Efficient Costs
+    // Slide 3: Instructions
     const slide3 = pptx.addSlide()
-    slide3.addText('Cost Reality Check', {
+    slide3.addText('How to Use This Presentation', {
       x: 0.5, y: 0.5, w: 9, h: 1,
       fontSize: 32, bold: true, color: '1f2937'
     })
 
-    const costData = [
-      ['Cost Type', 'Amount', 'Percentage'],
-      ['Efficient Project Cost', `$${calculations?.efficientCost?.toLocaleString() || '0'}`, `${Math.round(((calculations?.efficientCost || 0) / (calculations?.totalCost || 1)) * 100)}%`],
-      ['Current Waste', `$${calculations?.totalWaste?.toLocaleString() || '0'}`, `${calculations?.metrics?.wastePercentage || 0}%`],
-      ['Current Total Cost', `$${calculations?.totalCost?.toLocaleString() || '0'}`, '100%']
+    const instructions = [
+      '• The previous slide contains your complete analysis report',
+      '• You can add more slides, edit content, and customize the presentation',
+      '• All charts, metrics, and recommendations are included in the image',
+      '• Use this as a starting point for your client presentations',
+      '• Add your company branding and additional context as needed'
     ]
 
-    slide3.addTable(costData, {
-      x: 1, y: 1.5, w: 8, h: 3,
-      fontSize: 16,
-      fill: { color: 'f9fafb' },
-      border: { pt: 1, color: 'd1d5db' }
+    slide3.addText(instructions.join('\n'), {
+      x: 1, y: 2, w: 8, h: 4,
+      fontSize: 18, color: '374151', lineSpacing: 32
     })
 
-    // Slide 4: ROI Scenarios
+    // Slide 4: Next Steps
     const slide4 = pptx.addSlide()
-    slide4.addText('ROI of Our Consulting Services', {
-      x: 0.5, y: 0.5, w: 9, h: 1,
-      fontSize: 28, bold: true, color: '1f2937'
-    })
-
-    const totalInvestment = (consultingInputs?.consultingFee || 75000) + (consultingInputs?.supportCost || 25000)
-    const annualWaste = (calculations?.totalWaste || 0) * (costInputs?.projectsPerYear || 4)
-    
-    const roiData = [
-      ['Scenario', 'Waste Reduction', 'Annual Savings', 'ROI'],
-      ['Conservative', '30%', `$${Math.round(annualWaste * 0.3).toLocaleString()}`, `${Math.round(((annualWaste * 0.3 - totalInvestment) / totalInvestment) * 100)}%`],
-      ['Realistic', '60%', `$${Math.round(annualWaste * 0.6).toLocaleString()}`, `${Math.round(((annualWaste * 0.6 - totalInvestment) / totalInvestment) * 100)}%`],
-      ['Optimistic', '80%', `$${Math.round(annualWaste * 0.8).toLocaleString()}`, `${Math.round(((annualWaste * 0.8 - totalInvestment) / totalInvestment) * 100)}%`]
-    ]
-
-    slide4.addTable(roiData, {
-      x: 0.5, y: 1.5, w: 9, h: 3,
-      fontSize: 16,
-      fill: { color: 'f0f9ff' },
-      border: { pt: 1, color: '0ea5e9' }
-    })
-
-    // Slide 5: Next Steps
-    const slide5 = pptx.addSlide()
-    slide5.addText('Ready to Stop Wasting Money?', {
+    slide4.addText('Ready to Take Action?', {
       x: 0.5, y: 0.5, w: 9, h: 1,
       fontSize: 32, bold: true, color: '1f2937'
     })
 
     const nextStepsText = [
       '• Schedule a free consultation to discuss your specific needs',
-      '• Implement proven waste reduction strategies',
-      '• Achieve 300-500% ROI within the first year',
-      '• Recover 60-80% of identified waste within 3-6 months'
+      '• Review the complete analysis in the previous slides',
+      '• Customize this presentation for your stakeholders',
+      '• Contact us to implement waste reduction strategies'
     ]
 
-    slide5.addText(nextStepsText.join('\n'), {
+    slide4.addText(nextStepsText.join('\n'), {
       x: 1, y: 2, w: 8, h: 4,
       fontSize: 20, color: '374151', lineSpacing: 36
     })
@@ -375,12 +279,12 @@ export const exportToPowerPoint = async (data, filename = 'project-analysis-pres
 }
 
 // Export all formats
-export const exportAll = async (data) => {
+export const exportAll = async (elementId = 'results-content') => {
   try {
     const results = await Promise.allSettled([
-      exportToPDF('results-content'),
-      exportToWord(data),
-      exportToPowerPoint(data)
+      exportToPDF(elementId),
+      exportToWord(elementId),
+      exportToPowerPoint(elementId)
     ])
 
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length

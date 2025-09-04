@@ -21,20 +21,20 @@ export default function Results() {
     
     try {
       let result
-      const exportData = { clientInfo, calculations, costInputs, consultingInputs: state.consultingInputs }
+      const elementId = 'results-content'
       
       switch (type) {
         case 'pdf':
-          result = await exportToPDF('results-content')
+          result = await exportToPDF(elementId)
           break
         case 'word':
-          result = await exportToWord(exportData)
+          result = await exportToWord(elementId)
           break
         case 'powerpoint':
-          result = await exportToPowerPoint(exportData)
+          result = await exportToPowerPoint(elementId)
           break
         case 'all':
-          result = await exportAll(exportData)
+          result = await exportAll(elementId)
           break
         default:
           throw new Error('Unknown export type')
