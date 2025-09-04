@@ -53,105 +53,150 @@ export const exportToWord = async (elementId = 'results-content', filename = 'pr
       throw new Error('Content element not found')
     }
 
-    // Get the full HTML content
-    const htmlContent = element.innerHTML
+    // Create canvas from HTML to get image
+    const canvas = await html2canvas(element, {
+      scale: 1.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: element.scrollWidth,
+      height: element.scrollHeight
+    })
+
+    const imgData = canvas.toDataURL('image/png')
     
-    // Create a more comprehensive Word document with HTML content
-    const htmlString = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Project Analysis Report</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
-          .grid { display: flex; flex-wrap: wrap; gap: 16px; }
-          .text-center { text-align: center; }
-          .font-bold { font-weight: bold; }
-          .text-red-900 { color: #7f1d1d; }
-          .text-green-900 { color: #14532d; }
-          .text-blue-900 { color: #1e3a8a; }
-          .bg-red-50 { background-color: #fef2f2; }
-          .bg-green-50 { background-color: #f0fdf4; }
-          .bg-blue-50 { background-color: #eff6ff; }
-          table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-          th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-          th { background-color: #f9fafb; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        ${htmlContent}
-      </body>
-      </html>
-    `
+    // Extract key text content for Word document
+    const textContent = element.innerText || element.textContent || ''
+    const lines = textContent.split('\n').filter(line => line.trim().length > 0)
+    
+    // Create paragraphs from the extracted text
+    const paragraphs = []
+    
+    // Add title
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Project Analysis Report - Complete Details",
+            bold: true,
+            size: 32,
+            color: "1f2937"
+          })
+        ],
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 }
+      })
+    )
+    
+    // Add the full report as an image
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Complete Visual Report",
+            bold: true,
+            size: 24,
+            color: "374151"
+          })
+        ],
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 }
+      })
+    )
+    
+    // Add note about the image
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "The complete analysis report is shown below as a high-resolution image. All charts, metrics, waste breakdowns, ROI scenarios, and recommendations are included.",
+            size: 20
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    )
+    
+    // Add extracted text content in sections
+    let currentSection = ""
+    for (const line of lines) {
+      if (line.length > 0) {
+        // Check if this looks like a heading (short line, likely a title)
+        if (line.length < 100 && (
+          line.includes('Analysis') || 
+          line.includes('Summary') || 
+          line.includes('Metrics') || 
+          line.includes('ROI') || 
+          line.includes('Waste') ||
+          line.includes('Opportunities') ||
+          line.includes('Risk') ||
+          line.includes('$') && line.length < 50
+        )) {
+          // Add as heading
+          paragraphs.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: line,
+                  bold: true,
+                  size: 22,
+                  color: "374151"
+                })
+              ],
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 300, after: 100 }
+            })
+          )
+        } else {
+          // Add as regular paragraph
+          paragraphs.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: line,
+                  size: 18
+                })
+              ],
+              spacing: { after: 100 }
+            })
+          )
+        }
+      }
+    }
+    
+    // Add instructions
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "How to Use This Document",
+            bold: true,
+            size: 24,
+            color: "374151"
+          })
+        ],
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 600, after: 200 }
+      })
+    )
+    
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "• This document contains your complete project analysis with all details extracted as text\n• The visual report image shows all charts and formatting\n• You can edit this document, add your branding, and customize the content\n• All financial metrics, waste analysis, and recommendations are included\n• Use this as a foundation for your client presentations and reports",
+            size: 18
+          })
+        ],
+        spacing: { after: 200 }
+      })
+    )
 
     const doc = new Document({
       sections: [{
         properties: {},
-        children: [
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Project Analysis Report - Full Details",
-                bold: true,
-                size: 32,
-                color: "1f2937"
-              })
-            ],
-            heading: HeadingLevel.TITLE,
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 400 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Note: This document contains the complete analysis report.",
-                size: 20,
-                color: "6b7280"
-              })
-            ],
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 400 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "For best viewing experience, please open this document in Microsoft Word.",
-                size: 16,
-                color: "6b7280",
-                italics: true
-              })
-            ],
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 600 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Complete Analysis Report",
-                bold: true,
-                size: 24,
-                color: "374151"
-              })
-            ],
-            heading: HeadingLevel.HEADING_1,
-            spacing: { before: 400, after: 200 }
-          }),
-
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "This document contains all the detailed analysis, charts, and recommendations from your project inefficiency assessment. All data, metrics, waste breakdowns, ROI scenarios, and actionable recommendations are included for your review and editing.",
-                size: 20
-              })
-            ],
-            spacing: { after: 200 }
-          })
-        ]
+        children: paragraphs
       }]
     })
 
