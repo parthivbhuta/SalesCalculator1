@@ -374,95 +374,42 @@ export default function Results() {
         </div>
       </div>
 
-      {/* Performance vs Industry Benchmarks by Category */}
+      {/* Waste vs Efficiency Comparison */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Your Performance vs Industry Benchmarks by Category</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Efficiency vs Industry Benchmarks</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart 
             data={[
-              { 
-                category: 'Process Efficiency', 
-                yourPerformance: Math.max(0, 100 - (costInputs.inefficiencyPercentage || 15)), 
-                industryAverage: 80, 
-                bestPractice: 95 
-              },
-              { 
-                category: 'Meeting Efficiency', 
-                yourPerformance: Math.max(0, 100 - Math.min(50, ((costInputs.meetingsPerWeek || 12) * (costInputs.meetingDuration || 1) * (costInputs.participantsPerMeeting || 4)) / 10)), 
-                industryAverage: 75, 
-                bestPractice: 90 
-              },
-              { 
-                category: 'Communication', 
-                yourPerformance: Math.max(0, 100 - (costInputs.communicationOverhead || 20)), 
-                industryAverage: 85, 
-                bestPractice: 95 
-              },
-              { 
-                category: 'Resource Utilization', 
-                yourPerformance: costInputs.resourceUtilization || 75, 
-                industryAverage: 80, 
-                bestPractice: 90 
-              },
-              { 
-                category: 'Quality Management', 
-                yourPerformance: Math.max(0, 100 - (costInputs.defectRate || 6)), 
-                industryAverage: 92, 
-                bestPractice: 98 
-              },
-              { 
-                category: 'Timeline Management', 
-                yourPerformance: Math.max(0, 100 - (costInputs.delayPercentage || 25)), 
-                industryAverage: 85, 
-                bestPractice: 95 
-              }
+              { category: 'Your Project', efficiency: metrics.efficiencyRating, waste: metrics.wastePercentage, fill: '#EF4444' },
+              { category: 'Industry Average', efficiency: 75, waste: 25, fill: '#F59E0B' },
+              { category: 'Best Practice', efficiency: 90, waste: 10, fill: '#10B981' }
             ]} 
-            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="category" 
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              fontSize={11}
-              interval={0}
-            />
+            <XAxis dataKey="category" />
             <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-            <Tooltip formatter={(value, name) => [
-              `${value}%`, 
-              name === 'yourPerformance' ? 'Your Performance' : 
-              name === 'industryAverage' ? 'Industry Average' : 'Best Practice'
-            ]} />
-            <Bar dataKey="yourPerformance" fill="#EF4444" name="yourPerformance" />
-            <Bar dataKey="industryAverage" fill="#F59E0B" name="industryAverage" />
-            <Bar dataKey="bestPractice" fill="#10B981" name="bestPractice" />
+            <Tooltip formatter={(value, name) => [`${value}%`, name === 'efficiency' ? 'Efficiency Rating' : 'Waste Percentage']} />
+            <Bar dataKey="efficiency" fill="#10B981" name="efficiency" />
+            <Bar dataKey="waste" fill="#EF4444" name="waste" />
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-            <div className="w-4 h-4 bg-red-500 rounded mx-auto mb-2"></div>
-            <p className="text-sm text-red-600 font-medium">Your Performance</p>
-            <p className="text-xs text-red-600">Shows significant gaps in multiple areas</p>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-red-50 rounded-lg">
+            <p className="text-sm text-red-600 font-medium">Your Project</p>
+            <p className="text-lg font-bold text-red-900">{metrics.efficiencyRating}% Efficient</p>
+            <p className="text-xs text-red-600">{metrics.wastePercentage}% waste</p>
           </div>
-          <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="w-4 h-4 bg-yellow-500 rounded mx-auto mb-2"></div>
+          <div className="text-center p-3 bg-yellow-50 rounded-lg">
             <p className="text-sm text-yellow-600 font-medium">Industry Average</p>
-            <p className="text-xs text-yellow-600">Typical performance across organizations</p>
+            <p className="text-lg font-bold text-yellow-900">75% Efficient</p>
+            <p className="text-xs text-yellow-600">25% waste</p>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="w-4 h-4 bg-green-500 rounded mx-auto mb-2"></div>
+          <div className="text-center p-3 bg-green-50 rounded-lg">
             <p className="text-sm text-green-600 font-medium">Best Practice</p>
-            <p className="text-xs text-green-600">What's achievable with optimization</p>
+            <p className="text-lg font-bold text-green-900">90% Efficient</p>
+            <p className="text-xs text-green-600">10% waste</p>
           </div>
-        </div>
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h5 className="font-semibold text-blue-900 mb-2">Key Insights</h5>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• <strong>Biggest gaps:</strong> Areas where red bars are significantly below yellow/green</li>
-            <li>• <strong>Quick wins:</strong> Categories where small changes yield big improvements</li>
-            <li>• <strong>ROI potential:</strong> Larger gaps = higher savings opportunity</li>
-          </ul>
         </div>
       </div>
 
