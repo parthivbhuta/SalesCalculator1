@@ -237,8 +237,7 @@ export const exportToWord = async (data, filename = 'project-analysis-report.doc
       }]
     })
 
-    const buffer = await Packer.toBuffer(doc)
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+    const blob = await Packer.toBlob(doc)
     saveAs(blob, filename)
     
     return { success: true, message: 'Word document exported successfully' }
