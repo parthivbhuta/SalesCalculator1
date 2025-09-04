@@ -2,13 +2,53 @@ import * as React from 'react'
 import { useApp } from '../context/AppContext'
 import { calculateConsultingROI, getWasteReductionOpportunities } from '../utils/calculations'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts'
-import { Download, Mail, Printer, TrendingUp, DollarSign, Clock, AlertCircle, Target, Users, CheckCircle, ArrowUp, ArrowDown, Zap, Shield, TrendingDown, Lightbulb } from 'lucide-react'
+import { Download, Mail, Printer, TrendingUp, DollarSign, Clock, AlertCircle, Target, Users, CheckCircle, ArrowUp, ArrowDown, Zap, Shield, TrendingDown, Lightbulb, FileText, Presentation, FileSpreadsheet } from 'lucide-react'
+import { exportToPDF, exportToWord, exportToPowerPoint, exportAll } from '../utils/exportUtils'
+
+const { useState } = React
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#84CC16']
 
 export default function Results() {
   const { state } = useApp()
   const { clientInfo, calculations, costInputs } = state
+  const [exporting, setExporting] = useState(false)
+  const [exportStatus, setExportStatus] = useState('')
+
+  const handleExport = async (type) => {
+    setExporting(true)
+    setExportStatus(`Exporting ${type}...`)
+    
+    try {
+      let result
+      const exportData = { clientInfo, calculations, costInputs, consultingInputs: state.consultingInputs }
+      
+      switch (type) {
+        case 'pdf':
+          result = await exportToPDF('results-content')
+          break
+        case 'word':
+          result = await exportToWord(exportData)
+          break
+        case 'powerpoint':
+          result = await exportToPowerPoint(exportData)
+          break
+        case 'all':
+          result = await exportAll(exportData)
+          break
+        default:
+          throw new Error('Unknown export type')
+      }
+      
+      setExportStatus(result.message)
+      setTimeout(() => setExportStatus(''), 3000)
+    } catch (error) {
+      setExportStatus('Export failed: ' + error.message)
+      setTimeout(() => setExportStatus(''), 5000)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   if (!calculations || calculations.totalCost === 0) {
     return (
@@ -122,7 +162,7 @@ export default function Results() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div id="results-content" className="results-container space-y-8">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -138,6 +178,11 @@ export default function Results() {
           )}
         </div>
         <div className="flex space-x-3">
+          {exportStatus && (
+            <div className="flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
+              {exportStatus}
+            </div>
+          )}
           <button className="btn-secondary flex items-center">
             <Mail className="w-4 h-4 mr-2" />
             Email Report
@@ -146,9 +191,71 @@ export default function Results() {
             <Printer className="w-4 h-4 mr-2" />
             Print
           </button>
-          <button className="btn-primary flex items-center" disabled title="PDF export coming soon">
+          
+          {/* Export Dropdown */}
+          <div className="relative group">
+            <button className="btn-primary flex items-center" disabled={exporting}>
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? 'Exporting...' : 'Export Report'}
+            </button>
+            
+            {/* Dropdown Menu */}
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              <div className="py-2">
+                <button
+                  onClick={() => handleExport('pdf')}
+                  disabled={exporting}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                >
+                  <FileText className="w-4 h-4 mr-3 text-red-500" />
+                  Export as PDF
+                  <span className="ml-auto text-xs text-gray-500">Print-ready</span>
+                </button>
+                
+                <button
+                  onClick={() => handleExport('word')}
+                  disabled={exporting}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-3 text-blue-500" />
+                  Export as Word
+                  <span className="ml-auto text-xs text-gray-500">Editable</span>
+                </button>
+                
+                <button
+                  onClick={() => handleExport('powerpoint')}
+                  disabled={exporting}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                >
+                  <Presentation className="w-4 h-4 mr-3 text-orange-500" />
+                  Export as PowerPoint
+                  <span className="ml-auto text-xs text-gray-500">Presentation</span>
+                </button>
+                
+                <div className="border-t border-gray-100 my-1"></div>
+                
+                <button
+                  onClick={() => handleExport('all')}
+                  disabled={exporting}
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center font-medium"
+                >
+                  <Download className="w-4 h-4 mr-3 text-green-500" />
+                  Export All Formats
+                  <span className="ml-auto text-xs text-gray-500">PDF + Word + PPT</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Legacy button for backwards compatibility */}
+          <button
+            onClick={() => handleExport('pdf')}
+            disabled={exporting}
+            className="btn-secondary flex items-center"
+            title="Quick PDF export"
+          >
             <Download className="w-4 h-4 mr-2" />
-            Export PDF (Coming Soon)
+            {exporting ? 'Exporting...' : 'Quick PDF'}
           </button>
         </div>
       </div>
