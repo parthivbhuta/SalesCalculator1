@@ -382,41 +382,41 @@ export default function Results() {
             data={[
               { 
                 category: 'Process Efficiency', 
-                yourPerformance: Math.max(30, 100 - ((costInputs?.inefficiencyPercentage || 15) * 2.5)),
+                yourPerformance: Math.max(0, 100 - (costInputs.inefficiencyPercentage || 15)), 
                 industryAverage: 80, 
                 bestPractice: 95 
               },
               { 
                 category: 'Meeting Efficiency', 
-                yourPerformance: Math.max(25, 100 - ((costInputs?.meetingsPerWeek || 12) * 2.5)),
+                yourPerformance: Math.max(0, 100 - Math.min(50, ((costInputs.meetingsPerWeek || 12) * (costInputs.meetingDuration || 1) * (costInputs.participantsPerMeeting || 4)) / 10)), 
                 industryAverage: 75, 
                 bestPractice: 90 
               },
               { 
                 category: 'Communication', 
-                yourPerformance: Math.max(35, 100 - ((costInputs?.communicationOverhead || 20) * 1.5)), 
+                yourPerformance: Math.max(0, 100 - (costInputs.communicationOverhead || 20)), 
                 industryAverage: 85, 
                 bestPractice: 95 
               },
               { 
                 category: 'Resource Utilization', 
-                yourPerformance: Math.max(40, (costInputs?.resourceUtilization || 75) * 0.7), 
+                yourPerformance: costInputs.resourceUtilization || 75, 
                 industryAverage: 80, 
                 bestPractice: 90 
               },
               { 
                 category: 'Quality Management', 
-                yourPerformance: Math.max(35, 100 - ((costInputs?.defectRate || 6) * 6)),
+                yourPerformance: Math.max(0, 100 - (costInputs.defectRate || 6)), 
                 industryAverage: 92, 
                 bestPractice: 98 
               },
               { 
                 category: 'Timeline Management', 
-                yourPerformance: Math.max(30, 100 - ((costInputs?.delayPercentage || 25) * 2)),
+                yourPerformance: Math.max(0, 100 - (costInputs.delayPercentage || 25)), 
                 industryAverage: 85, 
                 bestPractice: 95 
               }
-            ]}
+            ]} 
             margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
