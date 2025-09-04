@@ -104,7 +104,6 @@ export default function CostInputs() {
       fields: [
         { name: 'defectRate', label: 'Expected Defect Rate (%)', min: 0, max: 30, help: 'Percentage of work requiring rework' },
         { name: 'reworkCostMultiplier', label: 'Rework Cost Multiplier', min: 1, max: 5, step: 0.1, help: 'How much more expensive rework is vs. initial work' },
-        { name: 'qualityAssuranceHours', label: 'QA Hours', min: 50, max: 2000, help: 'Dedicated quality assurance effort' },
         { name: 'qualityAssuranceHours', label: 'QA Hours', min: 1, max: 2000, help: 'Dedicated quality assurance effort' },
         { name: 'delayPercentage', label: 'Expected Delays (%)', min: 0, max: 100, help: 'Percentage of timeline likely to be delayed' },
         { name: 'penaltyCostPerDay', label: 'Penalty Cost per Day ($)', min: 0, max: 10000, help: 'Financial penalties for late delivery' },
@@ -117,7 +116,6 @@ export default function CostInputs() {
       color: 'text-indigo-600',
       description: 'Scale this analysis to your full organization',
       fields: [
-        { name: 'projectsPerYear', label: 'Similar Projects per Year', min: 1, max: 50, help: 'How many similar projects does your organization run annually?' },
         { name: 'projectsPerYear', label: 'Similar Projects per Year', min: 1, max: 5000, help: 'How many similar projects does your organization run annually?' },
       ]
     }
